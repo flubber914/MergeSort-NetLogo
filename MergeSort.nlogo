@@ -77,8 +77,6 @@ end
 to-report merge-sort-merge [items-1 items-2]
   let i 0
   let j 0
-  print items-1
-  print items-2
   let merged []
   while[(i < length items-1) and (j < length items-2)][
     (ifelse[size] of item i items-1 <= [size] of item j items-2[
@@ -90,18 +88,14 @@ to-report merge-sort-merge [items-1 items-2]
         set j j + 1
     ])
   ]
-  (ifelse ((i = length items-1))[
-    while[j != length items-2][
-      set merged lput item j items-2 merged
-      set j j + 1
-    ]
+  while[j != length items-2][
+    set merged lput item j items-2 merged
+    set j j + 1
   ]
-    ((j = length items-2))[
-      while[i != length items-1][
-        set merged lput item i items-1 merged
-        set i i + 1
-      ]
-  ])
+  while[i != length items-1][
+    set merged lput item i items-1 merged
+    set i i + 1
+  ]
   report merged
 end
 ;----------------------------------------------
