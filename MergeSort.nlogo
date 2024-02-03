@@ -7,6 +7,7 @@ globals [
 
 wolves-own [
   ;goal_patch ;; you could use a variable owned by each wolf to store the wolf's goal.
+  destination
 ]
 
 ;----------------------------------------------
@@ -23,6 +24,7 @@ to setup
     set color red
     setxy random-xcor random-ycor
     set size ((random 100) + 1) / 10  ; select a random number between 1 and 100, then divide it by 10
+    set destination (patch 0 0)
   ]
 end
 
@@ -40,6 +42,27 @@ to sort-wolves
   ]
 end
 
+to sort-wolves-walk ;moves wolves to ordered positions by walking instead of teleportation
+  let sorted_wolves merge-sort [self] of wolves ; <-- replace the call to bubble-sort with a call to your merge-sort
+  let x 0
+  let y 28
+  foreach sorted_wolves [ s -> ;set the destination of each wolf to x y instead of its position
+    ask s [set destination (patch x y)]
+    ask s [facexy x y] ;make the agent face towards the destination
+    set y (y - 3)
+  ]
+  let alldone false ;boolean to check when all agents have reached the destination
+  while[alldone = false][ ;while all wolves have not reached their destination
+    set alldone true
+    foreach sorted_wolves[ s -> ;if a wolf has not reached its destination, move forward and set alldone to false
+      ask s [if(destination != patch-here)[
+        ask s [set alldone false]
+        ask s [forward 1]
+      ]
+    ]]
+    tick
+  ]
+end
 ;-----------------
 
 to-report bubble-sort [items]
@@ -61,42 +84,42 @@ to-report bubble-sort [items]
 end
 
 ;-----------------
-to-report merge-sort [items]
+to-report merge-sort [items] ;splits lists up to be sorted in order of size
   let N length items
   let i 0
-  if N <= 1[
+  if N <= 1[ ;if the length of items is 1 then ther eis no need to split
     report items
   ]
   ;let array-2 (list items (N / 2) N)
-  let array-1 merge-sort sublist items 0 (N / 2)
-  let array-2 merge-sort sublist items (N / 2) N
-  report merge-sort-merge array-1 array-2
+  let list-1 merge-sort sublist items 0 (N / 2) ;recursively call merge-sort with the first half of the items list
+  let list-2 merge-sort sublist items (N / 2) N ;recursively call merge-sort with the second half of the items list
+  report merge-sort-merge list-1 list-2 ;set to return the two resulting lists together in order
 end
 
 ;-----------------
-to-report merge-sort-merge [items-1 items-2]
+to-report merge-sort-merge [items-1 items-2] ;merges lists together to sort them by size
   let i 0
   let j 0
-  let merged []
-  while[(i < length items-1) and (j < length items-2)][
-    (ifelse[size] of item i items-1 <= [size] of item j items-2[
-      set merged lput item i items-1 merged
+  let merged [] ;empty list to be the result of the two merged lists
+  while[(i < length items-1) and (j < length items-2)][ ;while neither list has all its items placed into merged list
+    (ifelse[size] of item i items-1 <= [size] of item j items-2[ ;if items-1 item in position i is smaller than items-2 in position j
+      set merged lput item i items-1 merged ;add item i from items-1 to merged list
       set i i + 1
     ]
-      ([size] of item i items-1 > [size] of item j items-2)[
-        set merged lput item j items-2 merged
+      ([size] of item i items-1 > [size] of item j items-2)[ ;if items-2 item in position j is smaller than item-1 in position i
+        set merged lput item j items-2 merged ;add item j from items-2 to merged list
         set j j + 1
     ])
-  ]
-  while[j != length items-2][
-    set merged lput item j items-2 merged
+  ] ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;end while
+  while[j != length items-2][ ;while not all items in items-2 are in merged
+    set merged lput item j items-2 merged ;add the rest of the items to merged
     set j j + 1
   ]
-  while[i != length items-1][
-    set merged lput item i items-1 merged
+  while[i != length items-1][ ;while not all items in items-1 are in merged
+    set merged lput item i items-1 merged ;add the rest of the items to merged
     set i i + 1
   ]
-  report merged
+  report merged ;set to return the merged list
 end
 ;----------------------------------------------
 @#$#@#$#@
@@ -121,8 +144,8 @@ GRAPHICS-WINDOW
 30
 -35
 35
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -151,6 +174,23 @@ BUTTON
 131
 NIL
 sort-wolves
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+19
+139
+144
+172
+NIL
+sort-wolves-walk
 NIL
 1
 T
